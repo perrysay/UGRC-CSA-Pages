@@ -187,19 +187,23 @@ import { pythonURI, javaURI, fetchOptions } from '{{site.baseurl}}/assets/js/api
 
   // Auto-substitute pseudocode shorthand as the user types
   const pseudoSubs = [['<--','←',3],['!=','≠',2],['>=','≥',2],['<=','≤',2]];
-  editor.on('change', (cm, change) => {
-    if (langSelect.value !== 'pseudocode') return;
-    if (change.origin !== '+input') return;
-    const cursor = cm.getCursor();
-    const line   = cm.getLine(cursor.line);
-    const pos    = cursor.ch;
-    for (const [find, rep, len] of pseudoSubs) {
-      if (line.slice(0, pos).endsWith(find)) {
-        cm.replaceRange(rep, {line: cursor.line, ch: pos - len}, {line: cursor.line, ch: pos});
-        break;
+  if (editor) {
+    editor.on('change', (cm, change) => {
+      if (langSelect.value !== 'pseudocode') return;
+      if (change.origin !== '+input') return;
+      const cursor = cm.getCursor();
+      const line   = cm.getLine(cursor.line);
+      const pos    = cursor.ch;
+      for (const [find, rep, len] of pseudoSubs) {
+        if (line.slice(0, pos).endsWith(find)) {
+          cm.replaceRange(rep, {line: cursor.line, ch: pos - len}, {line: cursor.line, ch: pos});
+          break;
+        }
       }
-    }
-  });
+    });
+  }
+
+runner.initializeEditor
 
   // Language switcher
   langSelect.addEventListener("change", () => {
