@@ -1,0 +1,425 @@
+// Messages page styling.
+//
+// The conversation panel itself is not styled here: it uses .dm-chat, which the
+// shared chat component partial styles alongside the class announcement chat
+// and the per-week chats. This file only adds what a conversation list needs on
+// top of that -- the page header, the two-column layout, the inbox, and the
+// local-mode identity switcher -- using the same tokens so it all reads as one
+// surface.
+//
+// Variables and mixins must be imported before the components that use them.
+@import "root-color-map";
+@import "open-coding/mixins/buttons";
+@import "open-coding/chat-ui";
+
+.dm-page {
+  color: $text;
+  font-family: var(--pref-font-family);
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  /* The site wrapper is sized for prose. A two-pane conversation view has room
+     to spare in it and none to waste, so on wide screens the page steps out of
+     the wrapper and centres itself against the viewport instead. 94vw rather
+     than 100vw leaves the scrollbar out of the calculation. */
+  @media (min-width: 1100px) {
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(1320px, 94vw);
+  }
+}
+
+/* ── Page header ──────────────────────────────────────────────────────
+   Mirrors the chat panel's own header strip a level up, so the page and the
+   conversation inside it are visibly the same family. */
+.dm-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 8px 0 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid $bg-3;
+}
+
+.dm-page-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+}
+
+.dm-page-badge {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1px solid rgba($accent, 0.35);
+  background: rgba($accent, 0.1);
+  color: $accent;
+  font-size: 18px;
+}
+
+.dm-page-eyebrow {
+  margin: 0;
+  color: $text-muted;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.dm-page-title {
+  margin: 2px 0 0 0;
+  padding: 0;
+  border-bottom: none;
+  color: var(--pref-accent-color);
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+.dm-page-subtitle {
+  margin: 6px 0 0 0;
+  color: $text-muted;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.dm-page-account {
+  color: $text-muted;
+  font-size: 12px;
+  padding: 6px 12px;
+  border: 1px solid $bg-3;
+  border-radius: 999px;
+  white-space: nowrap;
+
+  /* Signed out there is no account to name, and an empty pill is just a mark. */
+  &:empty { display: none; }
+}
+
+/* ── Layout ───────────────────────────────────────────────────────────────
+   Both columns are stretched to a common height driven by the message log, so
+   the page reads as one surface rather than two panels floating above a lot of
+   empty background. */
+.dm-layout {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 20px;
+  align-items: stretch;
+  margin-bottom: 40px;
+}
+
+.dm-chat {
+  /* The shared component spaces itself for a page flow; in this grid the
+     surrounding layout already handles that. */
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+
+  .chat-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  /* The log takes whatever is left after the banners and the composer, within
+     a viewport-relative band so it grows on a large screen without pushing the
+     composer off the bottom. */
+  .chat-messages {
+    flex: 1;
+    min-height: 20em;
+    max-height: none;
+    height: auto;
+  }
+}
+
+/* ── Sidebar ──────────────────────────────────────────────────────────── */
+.dm-sidebar {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid $bg-3;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.dm-sidebar-section {
+  padding: 14px 16px;
+
+  & + & { border-top: 1px solid $bg-3; }
+}
+
+.dm-sidebar-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px 0;
+  padding: 0;
+  border-bottom: none;
+  color: $text;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dm-label {
+  display: block;
+  margin-bottom: 6px;
+  color: $text;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* The shared .chat-input is sized by the chat form's flex row; in the sidebar
+   it is a plain block and has to claim the width itself. */
+.dm-sidebar .chat-input { width: 100%; }
+
+.dm-hint {
+  margin: 8px 0 0 0;
+  color: $text-muted;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.dm-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: $accent;
+  color: $bg-0;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Search results and inbox rows share a row shape: avatar, then stacked text. */
+.dm-person,
+.dm-inbox-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 4px 0;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: $text;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+
+  &:hover {
+    background: rgba($accent, 0.08);
+    border-color: rgba($accent, 0.35);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .chat-avatar { flex-shrink: 0; }
+}
+
+.dm-inbox-item[aria-pressed="true"] {
+  background: rgba($accent, 0.12);
+  border-color: $accent;
+}
+
+.dm-inbox-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.dm-inbox-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dm-inbox-name {
+  color: $text;
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dm-inbox-uid,
+.dm-inbox-preview {
+  color: $text-muted;
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dm-inbox-preview { font-size: 12px; }
+
+/* The inbox absorbs the sidebar's spare height and scrolls inside it, which
+   keeps the identity panel pinned to the bottom instead of drifting up. */
+.dm-sidebar-inbox {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+
+  .dm-inbox {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+}
+
+/* ── Signed-out prompt ────────────────────────────────────────────────── */
+.dm-signin {
+  padding: 14px 16px;
+  border-top: 1px solid $bg-3;
+  background: rgba($accent, 0.06);
+
+  &[hidden] { display: none; }
+}
+
+.dm-signin-text {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 10px 0;
+  color: $text-muted;
+  font-size: 12px;
+  line-height: 1.45;
+
+  i {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: $accent;
+  }
+}
+
+.dm-signin-link {
+  @include text-button;
+  gap: 6px;
+  border-color: $accent;
+  color: $accent;
+  text-decoration: none;
+
+  &:hover { background: rgba($accent, 0.12); }
+}
+
+/* ── Conversation extras ──────────────────────────────────────────────── */
+.dm-peer-badge {
+  /* Once a conversation is open the badge shows the other person's initials
+     rather than the generic icon. */
+  border-color: rgba($accent, 0.5);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.dm-error {
+  display: flex;
+  margin: 0 0 12px 0;
+  padding: 8px 12px;
+  border: 1px solid rgba($red, 0.4);
+  background: rgba($red, 0.08);
+  border-radius: 6px;
+  color: $red;
+  font-size: 12px;
+  line-height: 1.45;
+
+  &[hidden] { display: none; }
+}
+
+.dm-typing {
+  min-height: 1.2em;
+  margin: 6px 2px 0;
+  color: $text-muted;
+  font-size: 11px;
+  font-style: italic;
+}
+
+.dm-attachments {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid $bg-3;
+  color: $text-muted;
+  font-size: 12px;
+
+  summary {
+    cursor: pointer;
+    color: $text;
+    font-weight: 600;
+  }
+
+  .dm-label { margin-top: 10px; }
+
+  input[type="file"] {
+    color: $text-muted;
+    font-size: 12px;
+  }
+}
+
+.dm-file {
+  @include text-button;
+  gap: 6px;
+  margin: 8px 8px 0 0;
+  border-color: $bg-3;
+  color: $text;
+  overflow-wrap: anywhere;
+
+  &:hover { border-color: $accent; color: $accent; }
+}
+
+/* ── Wide screens ─────────────────────────────────────────────────────────
+   Gives the grid row a real height to distribute, so the message log can claim
+   the space instead of collapsing to its content. */
+@media (min-width: 1100px) {
+  .dm-layout { min-height: min(74vh, 820px); }
+}
+
+/* ── Small screens ────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .dm-layout { grid-template-columns: 1fr; }
+
+  /* Stacked, the sidebar has no spare height to absorb, so the inbox goes back
+     to a fixed scrolling band. */
+  .dm-sidebar-inbox {
+    flex: none;
+
+    .dm-inbox { flex: none; max-height: 16em; }
+  }
+
+  .dm-chat .chat-messages { min-height: 18em; }
+}
+
+@media (max-width: 768px) {
+  .dm-page-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .dm-page-title { font-size: 1.6rem; }
+
+  .dm-chat .chat-messages {
+    min-height: 16em;
+    max-height: 22em;
+  }
+}

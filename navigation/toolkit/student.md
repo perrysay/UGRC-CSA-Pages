@@ -6,6 +6,11 @@ permalink: /student
 ---
 
 <div class="toolkit-buttons">
+  <a href="{{site.baseurl}}/student/messages" class="toolkit-button" data-description="Find someone and start a private conversation.">
+    <img src="{{site.baseurl}}/images/toolkit-nav-buttons/group-chat.png" alt="" />
+    <span class="button-name">Messages</span>
+    <div class="description"><p>Read and reply to your private conversations.</p></div>
+  </a>
   <a href="{{site.baseurl}}/bathroom" class="toolkit-button" data-description="Toolset transforms bathroom passes and restroom management with smart digital passes, real-time occupancy tracking, and seamless feedback options. By enhancing hygiene, accessibility, and comfort, it creates a more efficient and user-friendly bathroom experience.">
     <img src="{{site.baseurl}}/images/toolkit-nav-buttons/bathroom.png" alt="Bathroom" />
     <span class="button-name">Bathroom</span>

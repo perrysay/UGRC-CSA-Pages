@@ -59,7 +59,8 @@
 
   function submitMessage() {
     if (composer.isEmpty() || composer.isOverLimit()) return;
-    if (sendMessage(composer.getHTML())) composer.clear();
+    const attachment = composer.getAttachment();
+    if (sendMessage(composer.getHTML(), attachment ? attachment.image : null)) composer.clear();
   }
 
   function setStatus(text) {
@@ -78,7 +79,7 @@
     if (empty) empty.remove();
   }
 
-  function appendMessage({ sender, message, date }) {
+  function appendMessage({ sender, message, date, image }) {
     clearEmpty();
     const who = sender === state.currentUserDisplayName ? 'You' : (sender || 'Unknown');
     const when = formatTimestamp(date);
@@ -86,7 +87,7 @@
     const strong = document.createElement('strong');
     strong.textContent = who;
     const body = document.createElement('span');
-    renderRichMessage(body, message);
+    renderRichMessage(body, message, image);
     line.append(strong, document.createTextNode(when ? ` · ${when}: ` : ': '), body);
     messagesEl.appendChild(line);
     messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -180,7 +181,7 @@
         const key = eventKey({ sender: msg.name, date: msg.date, message: msg.message });
         if (state.seenKeys.has(key)) return;
         state.seenKeys.add(key);
-        appendMessage({ sender: msg.name, message: stripped, date: msg.date });
+        appendMessage({ sender: msg.name, message: stripped, date: msg.date, image: msg.image });
       });
     } catch (err) {
       console.warn('Lesson chat: history load failed', err);
@@ -194,7 +195,7 @@
     const key = eventKey(event);
     if (state.seenKeys.has(key)) return;
     state.seenKeys.add(key);
-    appendMessage({ sender: event.sender, message: stripped, date: event.date });
+    appendMessage({ sender: event.sender, message: stripped, date: event.date, image: event.image });
   }
 
   function connect() {
@@ -235,14 +236,14 @@
     });
   }
 
-  function sendMessage(text) {
+  function sendMessage(text, image) {
     if (!state.connected || !state.stompClient || !state.backboneGroupId) return false;
     const payload = {
       context: 'sendMessage',
       groupId: state.backboneGroupId,
       sender: state.currentUserDisplayName || 'anonymous',
       message: `${LESSON_MARKER} ${text}`,
-      image: null,
+      image: image || null,
       date: new Date().toISOString(),
     };
     try {

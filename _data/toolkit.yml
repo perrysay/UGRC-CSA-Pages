@@ -1,4 +1,11 @@
 links:
+  - id: messages
+    href: student/messages
+    label: Messages
+    description:
+      - Find a person and start a private conversation
+      - Read and reply to your direct messages
+    icon: images/toolkit-nav-buttons/group-chat.png
   - id: calendar
     href: student/calendar
     label: Calendar

@@ -1,0 +1,9 @@
+# Used only by make dm-preview; production builds do not include this file.
+url: "http://localhost:4500"
+baseurl: ""
+incremental: false
+source: .dm-preview/source
+destination: .dm-preview/site
+remote_theme: null
+theme: null
+plugins: []

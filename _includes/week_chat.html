@@ -47,7 +47,7 @@
 
 <script type="module">
   import { javaURI, pythonURI, fetchOptions } from '{{site.baseurl}}/assets/js/api/config.js';
-  import { createRichComposer, renderRichMessage } from '{{site.baseurl}}/assets/js/chat/rich-text.js';
+  import { createRichComposer, renderRichMessage, createMessageActions } from '{{site.baseurl}}/assets/js/chat/rich-text.js';
 
   const COURSE = {{ page.course | jsonify }};
   const WEEK_INDEX = {{ index | jsonify }};
@@ -124,6 +124,13 @@
   formEl.classList.add('chat-form--rich');
   formEl.insertBefore(composer.element, sendBtn);
 
+  // Hover actions (react / reply / copy) on other people's messages — enabled
+  // only once resolveCurrentUser() confirms a signed-in user.
+  const msgActions = createMessageActions(messagesEl, {
+    storageKey: `ocs-chat-reactions:${GROUP_NAME}`,
+    onReply: (target) => composer.setReplyTo(target),
+  });
+
   function setStatus(text, tone) {
     statusEl.textContent = text;
     statusPillEl.classList.remove('is-live', 'is-preview', 'is-error');
@@ -142,7 +149,8 @@
 
   function submitMessage() {
     if (composer.isEmpty() || composer.isOverLimit()) return;
-    if (sendMessage(composer.getHTML())) composer.clear();
+    const attachment = composer.getAttachment();
+    if (sendMessage(composer.getHTML(), attachment ? attachment.image : null)) composer.clear();
   }
 
   function formatTimestamp(isoString) {
@@ -157,13 +165,17 @@
     if (empty) empty.remove();
   }
 
-  function appendMessage({ sender, message, date }) {
+  function appendMessage({ sender, message, date, image }) {
     clearEmpty();
-    const who = sender === state.currentUserDisplayName ? 'You' : (sender || 'Unknown');
+    const isSelf = sender === state.currentUserDisplayName;
+    const who = isSelf ? 'You' : (sender || 'Unknown');
     const when = formatTimestamp(date);
 
     const line = document.createElement('div');
-    line.className = who === 'You' ? 'chat-msg is-self' : 'chat-msg';
+    line.className = isSelf ? 'chat-msg is-self' : 'chat-msg';
+    line.dataset.msgKey = eventKey({ sender, date, message, image });
+    line.dataset.msgSender = sender || 'Unknown';
+    if (isSelf) line.dataset.msgSelf = '1';
 
     const meta = document.createElement('div');
     meta.className = 'chat-msg-meta';
@@ -180,10 +192,11 @@
 
     const body = document.createElement('span');
     body.className = 'chat-msg-body';
-    renderRichMessage(body, message);
+    renderRichMessage(body, message, image);
 
     line.append(meta, body);
     messagesEl.appendChild(line);
+    msgActions.decorate(line);
     messagesEl.scrollTop = messagesEl.scrollHeight;
 
     const previewUrl = firstUrlIn(message);
@@ -265,7 +278,7 @@
   }
 
   function eventKey(event) {
-    return [event?.sender || '', event?.date || '', event?.message || ''].join('|');
+    return [event?.sender || '', event?.date || '', event?.message || '', String(event?.image || '').length].join('|');
   }
 
   /* ── Local preview mode ─────────────────────────────────────────────
@@ -327,13 +340,13 @@
   // where the STOMP /app/groups.chat path currently has no server-side auth
   // at all. REST still broadcasts live to everyone connected — it flows
   // through the same GroupChatRealtimeService.publishMessage() either way.
-  async function sendLiveMessage(sender, text, date) {
+  async function sendLiveMessage(sender, text, date, image) {
     if (!state.backboneGroupId) return false;
     try {
       const res = await fetch(`${javaURI}/api/groups/chat/${state.backboneGroupId}/messages`, {
         ...fetchOptions,
         method: 'POST',
-        body: JSON.stringify({ name: sender, message: text, date, image: null }),
+        body: JSON.stringify({ name: sender, message: text, date, image: image || null }),
       });
       return res.ok;
     } catch (err) {
@@ -369,7 +382,7 @@
     publishBtn.disabled = true;
     const sent = [];
     for (const entry of pending) {
-      if (!(await sendLiveMessage(state.currentUserDisplayName, entry.message, entry.date))) break;
+      if (!(await sendLiveMessage(state.currentUserDisplayName, entry.message, entry.date, entry.image))) break;
       sent.push(entry);
       await delay(120);
     }
@@ -485,10 +498,10 @@
       if (!res.ok) { console.warn('Week chat: history HTTP', res.status); return; }
       const messages = await res.json();
       (messages || []).forEach((msg) => {
-        const key = eventKey({ sender: msg.name, date: msg.date, message: msg.message });
+        const key = eventKey({ sender: msg.name, date: msg.date, message: msg.message, image: msg.image });
         if (state.seenKeys.has(key)) return;
         state.seenKeys.add(key);
-        appendMessage({ sender: msg.name, message: msg.message, date: msg.date });
+        appendMessage({ sender: msg.name, message: msg.message, date: msg.date, image: msg.image });
       });
     } catch (err) {
       console.warn('Week chat: history load failed', err);
@@ -500,7 +513,7 @@
     const key = eventKey(event);
     if (state.seenKeys.has(key)) return;
     state.seenKeys.add(key);
-    appendMessage({ sender: event.sender, message: event.message, date: event.date });
+    appendMessage({ sender: event.sender, message: event.message, date: event.date, image: event.image });
   }
 
   function connect() {
@@ -536,11 +549,11 @@
     });
   }
 
-  function sendMessage(text) {
+  function sendMessage(text, image) {
     const date = new Date().toISOString();
 
     if (state.mode === 'preview') {
-      const entry = { sender: state.currentUserDisplayName || 'You', message: text, date };
+      const entry = { sender: state.currentUserDisplayName || 'You', message: text, image: image || null, date };
       state.seenKeys.add(eventKey(entry));
       writePreviewMessage(entry);
       appendMessage(entry);
@@ -553,7 +566,7 @@
       groupId: state.backboneGroupId,
       sender: state.currentUserDisplayName || 'anonymous',
       message: text,
-      image: null,
+      image: image || null,
       date,
     };
     try { state.stompClient.send('/app/groups.chat', {}, JSON.stringify(payload)); return true; }
@@ -570,6 +583,7 @@
       enterPreviewMode('You are not signed in.');
       return;
     }
+    msgActions.setSignedIn(true);
 
     const ok = await resolveBackboneGroup();
     if (!ok) {

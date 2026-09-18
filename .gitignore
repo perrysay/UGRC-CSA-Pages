@@ -1,4 +1,5 @@
 _site
+.dm-preview/
 *.pyc
 __pycache__/
 _config.local.yml
@@ -46,6 +47,7 @@ _docx/~$*
 *.tmp
 
 # Project distributions (auto-generated from _projects/ source)
+_includes/projects/
 _notebooks/projects/
 _posts/projects/
 _sass/projects/
@@ -58,6 +60,10 @@ _projects/*/Makefile
 _projects/*/*/Makefile
 # Except the template itself (single source of truth)
 !_projects/_template/Makefile
+# Multi-notebook lesson projects use custom Makefiles rather than the template.
+!_projects/lessons/python/Makefile
+!_projects/lessons/javascript/Makefile
+!_projects/lessons/java/Makefile
 
 # Project pages (deployed from _projects/ at build time to _posts/)
 _posts/projects/
@@ -83,3 +89,6 @@ _notebooks/**/*_content.md
 
 # Claude Code session artifacts
 .claude/
+
+# Local render of a layout against fixture data (_sass/ocs/tools/preview_*.py)
+.preview/

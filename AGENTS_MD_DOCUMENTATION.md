@@ -151,3 +151,4 @@ Names should:
 
 * **YAGNI (You Aren’t Gonna Need It):** Don’t build features unless required now. Avoid speculative generalization.
 * Optimize only after correctness is guaranteed (Profile before optimizing).
+
